@@ -1,0 +1,865 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ASA Compliance Checker - UK Advertising Standards</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary-color: #003087;
+            --secondary-color: #0066cc;
+            --danger-color: #d32f2f;
+            --warning-color: #f57c00;
+            --success-color: #388e3c;
+            --info-color: #0288d1;
+            --bg-color: #f5f7fa;
+            --card-bg: #ffffff;
+            --text-primary: #2c3e50;
+            --text-secondary: #546e7a;
+            --border-color: #e0e0e0;
+            --shadow: 0 2px 8px rgba(0,0,0,0.1);
+            --shadow-hover: 0 4px 16px rgba(0,0,0,0.15);
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: var(--bg-color);
+            color: var(--text-primary);
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        header {
+            background: var(--primary-color);
+            color: white;
+            padding: 30px 0;
+            margin-bottom: 40px;
+            box-shadow: var(--shadow);
+        }
+
+        header .container {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        h1 {
+            font-size: 2rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .subtitle {
+            font-size: 0.9rem;
+            opacity: 0.9;
+            margin-top: 5px;
+        }
+
+        .card {
+            background: var(--card-bg);
+            border-radius: 12px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: var(--shadow);
+            transition: box-shadow 0.3s ease;
+        }
+
+        .card:hover {
+            box-shadow: var(--shadow-hover);
+        }
+
+        .card-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid var(--border-color);
+        }
+
+        .card-header h2 {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: var(--primary-color);
+        }
+
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 30px;
+            border-bottom: 2px solid var(--border-color);
+        }
+
+        .tab {
+            padding: 12px 24px;
+            background: transparent;
+            border: none;
+            border-bottom: 3px solid transparent;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 500;
+            color: var(--text-secondary);
+            transition: all 0.3s ease;
+        }
+
+        .tab:hover {
+            color: var(--primary-color);
+        }
+
+        .tab.active {
+            color: var(--primary-color);
+            border-bottom-color: var(--primary-color);
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        textarea {
+            width: 100%;
+            min-height: 200px;
+            padding: 15px;
+            border: 2px solid var(--border-color);
+            border-radius: 8px;
+            font-size: 1rem;
+            font-family: inherit;
+            resize: vertical;
+            transition: border-color 0.3s ease;
+        }
+
+        textarea:focus {
+            outline: none;
+            border-color: var(--primary-color);
+        }
+
+        .file-upload {
+            border: 3px dashed var(--border-color);
+            border-radius: 8px;
+            padding: 40px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .file-upload:hover {
+            border-color: var(--primary-color);
+            background: rgba(0, 48, 135, 0.05);
+        }
+
+        .file-upload.dragover {
+            border-color: var(--primary-color);
+            background: rgba(0, 48, 135, 0.1);
+        }
+
+        .file-upload input {
+            display: none;
+        }
+
+        .file-upload-icon {
+            font-size: 3rem;
+            margin-bottom: 10px;
+            color: var(--text-secondary);
+        }
+
+        .btn {
+            padding: 12px 30px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-primary {
+            background: var(--primary-color);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: var(--secondary-color);
+            transform: translateY(-2px);
+            box-shadow: var(--shadow);
+        }
+
+        .btn-primary:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn-secondary {
+            background: var(--text-secondary);
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: #37474f;
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .results {
+            margin-top: 30px;
+        }
+
+        .alert {
+            padding: 15px 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+        }
+
+        .alert-high {
+            background: #ffebee;
+            border-left: 4px solid var(--danger-color);
+            color: #c62828;
+        }
+
+        .alert-medium {
+            background: #fff3e0;
+            border-left: 4px solid var(--warning-color);
+            color: #e65100;
+        }
+
+        .alert-low {
+            background: #e3f2fd;
+            border-left: 4px solid var(--info-color);
+            color: #01579b;
+        }
+
+        .alert-success {
+            background: #e8f5e9;
+            border-left: 4px solid var(--success-color);
+            color: #2e7d32;
+        }
+
+        .risk-badge {
+            display: inline-block;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .risk-high {
+            background: var(--danger-color);
+            color: white;
+        }
+
+        .risk-medium {
+            background: var(--warning-color);
+            color: white;
+        }
+
+        .risk-low {
+            background: var(--info-color);
+            color: white;
+        }
+
+        .risk-compliant {
+            background: var(--success-color);
+            color: white;
+        }
+
+        .issue-card {
+            background: white;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 15px;
+            transition: all 0.3s ease;
+        }
+
+        .issue-card:hover {
+            box-shadow: var(--shadow);
+            transform: translateX(5px);
+        }
+
+        .issue-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: start;
+            margin-bottom: 12px;
+        }
+
+        .issue-title {
+            font-weight: 600;
+            font-size: 1.1rem;
+            color: var(--text-primary);
+        }
+
+        .issue-description {
+            color: var(--text-secondary);
+            margin-bottom: 10px;
+        }
+
+        .issue-details {
+            display: grid;
+            gap: 8px;
+            font-size: 0.9rem;
+        }
+
+        .issue-detail {
+            display: flex;
+            gap: 8px;
+        }
+
+        .issue-detail-label {
+            font-weight: 600;
+            color: var(--text-secondary);
+            min-width: 100px;
+        }
+
+        .issue-detail-value {
+            color: var(--text-primary);
+        }
+
+        .suggestion-box {
+            background: #f0f7ff;
+            border-left: 4px solid var(--info-color);
+            padding: 15px;
+            margin-top: 15px;
+            border-radius: 4px;
+        }
+
+        .suggestion-box strong {
+            color: var(--info-color);
+        }
+
+        .summary-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            text-align: center;
+            box-shadow: var(--shadow);
+        }
+
+        .stat-number {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 5px;
+        }
+
+        .stat-label {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 20px;
+        }
+
+        .loading.active {
+            display: block;
+        }
+
+        .spinner {
+            border: 4px solid var(--border-color);
+            border-top: 4px solid var(--primary-color);
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 15px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .suggestions-section {
+            display: none;
+            margin-top: 30px;
+        }
+
+        .suggestions-section.active {
+            display: block;
+        }
+
+        .revised-content {
+            background: #f5f5f5;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 20px;
+            white-space: pre-wrap;
+            font-family: 'Courier New', monospace;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .info-box {
+            background: #e3f2fd;
+            border-left: 4px solid var(--info-color);
+            padding: 20px;
+            border-radius: 4px;
+            margin-bottom: 30px;
+        }
+
+        .info-box h3 {
+            color: var(--info-color);
+            margin-bottom: 10px;
+        }
+
+        .info-box ul {
+            margin-left: 20px;
+        }
+
+        .info-box li {
+            margin-bottom: 8px;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 15px;
+            }
+
+            h1 {
+                font-size: 1.5rem;
+            }
+
+            .card {
+                padding: 20px;
+            }
+
+            .btn-group {
+                flex-direction: column;
+            }
+
+            .btn {
+                width: 100%;
+                justify-content: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="container">
+            <div>
+                <h1>
+                    🇬🇧 ASA Compliance Checker
+                </h1>
+                <div class="subtitle">UK Advertising Standards Authority Code Review Tool</div>
+            </div>
+        </div>
+    </header>
+
+    <div class="container">
+        <div class="info-box">
+            <h3>About This Tool</h3>
+            <p>This tool helps you review advertising content against the UK ASA (Advertising Standards Authority) Code. It identifies potential compliance issues and provides suggestions for improvement.</p>
+            <ul>
+                <li><strong>High Risk:</strong> Issues that likely breach ASA Code and require immediate attention</li>
+                <li><strong>Medium Risk:</strong> Claims requiring substantiation or clarification</li>
+                <li><strong>Low Risk:</strong> Minor issues that should be addressed for best practice</li>
+            </ul>
+        </div>
+
+        <div class="card">
+            <div class="card-header">
+                <h2>Upload Your Advertising Content</h2>
+            </div>
+
+            <div class="tabs">
+                <button class="tab active" data-tab="text">📝 Text Content</button>
+                <button class="tab" data-tab="visual">🖼️ Visual Content</button>
+            </div>
+
+            <div id="text-tab" class="tab-content active">
+                <textarea id="textContent" placeholder="Paste your advertising copy here...
+
+Example:
+Lose 10kg in just 2 weeks with our miracle weight loss pill! 100% guaranteed results. Clinically proven formula. Free trial - limited time only!"></textarea>
+
+                <div class="btn-group">
+                    <button class="btn btn-primary" id="checkTextBtn">
+                        🔍 Check Compliance
+                    </button>
+                    <button class="btn btn-secondary" id="clearTextBtn">
+                        ✖️ Clear
+                    </button>
+                </div>
+            </div>
+
+            <div id="visual-tab" class="tab-content">
+                <div class="file-upload" id="fileUpload">
+                    <div class="file-upload-icon">📤</div>
+                    <p><strong>Click to upload</strong> or drag and drop</p>
+                    <p style="color: var(--text-secondary); font-size: 0.9rem; margin-top: 10px;">
+                        Supported formats: PNG, JPG, JPEG, GIF, BMP, WEBP (Max 16MB)
+                    </p>
+                    <input type="file" id="fileInput" accept="image/*">
+                </div>
+
+                <div id="filePreview" style="display: none; margin-top: 20px;">
+                    <p><strong>Selected file:</strong> <span id="fileName"></span></p>
+                    <img id="previewImage" style="max-width: 100%; max-height: 300px; margin-top: 10px; border-radius: 8px;">
+                </div>
+
+                <div class="btn-group">
+                    <button class="btn btn-primary" id="checkVisualBtn" disabled>
+                        🔍 Check Compliance
+                    </button>
+                    <button class="btn btn-secondary" id="clearVisualBtn">
+                        ✖️ Clear
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div class="loading" id="loading">
+            <div class="spinner"></div>
+            <p>Analyzing content for ASA compliance...</p>
+        </div>
+
+        <div class="results" id="results" style="display: none;">
+            <div class="card">
+                <div class="card-header">
+                    <h2>Compliance Analysis Results</h2>
+                </div>
+
+                <div id="overallRisk"></div>
+
+                <div class="summary-stats" id="statsContainer"></div>
+
+                <div id="issuesContainer"></div>
+
+                <button class="btn btn-primary" id="showSuggestionsBtn" style="margin-top: 20px;">
+                    💡 View Suggested Changes
+                </button>
+            </div>
+        </div>
+
+        <div class="suggestions-section" id="suggestionsSection">
+            <div class="card">
+                <div class="card-header">
+                    <h2>Suggested Improvements</h2>
+                </div>
+
+                <div id="suggestionsContent"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Tab switching
+        document.querySelectorAll('.tab').forEach(tab => {
+            tab.addEventListener('click', () => {
+                document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+
+                tab.classList.add('active');
+                const tabId = tab.dataset.tab;
+                document.getElementById(`${tabId}-tab`).classList.add('active');
+            });
+        });
+
+        // Text content checking
+        document.getElementById('checkTextBtn').addEventListener('click', async () => {
+            const content = document.getElementById('textContent').value.trim();
+
+            if (!content) {
+                alert('Please enter some text content to check.');
+                return;
+            }
+
+            await checkCompliance('/api/check-text', { content });
+        });
+
+        document.getElementById('clearTextBtn').addEventListener('click', () => {
+            document.getElementById('textContent').value = '';
+            hideResults();
+        });
+
+        // Visual content handling
+        const fileUpload = document.getElementById('fileUpload');
+        const fileInput = document.getElementById('fileInput');
+        const filePreview = document.getElementById('filePreview');
+        const previewImage = document.getElementById('previewImage');
+        const fileName = document.getElementById('fileName');
+        const checkVisualBtn = document.getElementById('checkVisualBtn');
+
+        fileUpload.addEventListener('click', () => fileInput.click());
+
+        fileUpload.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            fileUpload.classList.add('dragover');
+        });
+
+        fileUpload.addEventListener('dragleave', () => {
+            fileUpload.classList.remove('dragover');
+        });
+
+        fileUpload.addEventListener('drop', (e) => {
+            e.preventDefault();
+            fileUpload.classList.remove('dragover');
+
+            if (e.dataTransfer.files.length) {
+                fileInput.files = e.dataTransfer.files;
+                handleFileSelect(e.dataTransfer.files[0]);
+            }
+        });
+
+        fileInput.addEventListener('change', (e) => {
+            if (e.target.files.length) {
+                handleFileSelect(e.target.files[0]);
+            }
+        });
+
+        function handleFileSelect(file) {
+            fileName.textContent = file.name;
+
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                previewImage.src = e.target.result;
+                filePreview.style.display = 'block';
+                checkVisualBtn.disabled = false;
+            };
+            reader.readAsDataURL(file);
+        }
+
+        checkVisualBtn.addEventListener('click', async () => {
+            const file = fileInput.files[0];
+            if (!file) return;
+
+            const formData = new FormData();
+            formData.append('file', file);
+
+            await checkCompliance('/api/check-visual', formData, true);
+        });
+
+        document.getElementById('clearVisualBtn').addEventListener('click', () => {
+            fileInput.value = '';
+            filePreview.style.display = 'none';
+            checkVisualBtn.disabled = true;
+            hideResults();
+        });
+
+        // Check compliance function
+        async function checkCompliance(endpoint, data, isFormData = false) {
+            const loading = document.getElementById('loading');
+            const results = document.getElementById('results');
+            const suggestionsSection = document.getElementById('suggestionsSection');
+
+            loading.classList.add('active');
+            results.style.display = 'none';
+            suggestionsSection.classList.remove('active');
+
+            try {
+                const options = {
+                    method: 'POST',
+                };
+
+                if (isFormData) {
+                    options.body = data;
+                } else {
+                    options.headers = { 'Content-Type': 'application/json' };
+                    options.body = JSON.stringify(data);
+                }
+
+                const response = await fetch(endpoint, options);
+                const result = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(result.error || 'An error occurred');
+                }
+
+                displayResults(result);
+            } catch (error) {
+                alert(`Error: ${error.message}`);
+            } finally {
+                loading.classList.remove('active');
+            }
+        }
+
+        // Display results
+        function displayResults(data) {
+            const results = document.getElementById('results');
+            const overallRisk = document.getElementById('overallRisk');
+            const statsContainer = document.getElementById('statsContainer');
+            const issuesContainer = document.getElementById('issuesContainer');
+
+            // Overall risk
+            const riskClass = data.overall_risk.toLowerCase();
+            overallRisk.innerHTML = `
+                <div class="alert alert-${riskClass === 'high' ? 'high' : riskClass === 'medium' ? 'medium' : riskClass === 'compliant' ? 'success' : 'low'}">
+                    <div>
+                        <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px;">
+                            <span class="risk-badge risk-${riskClass}">${data.overall_risk}</span>
+                            <strong style="font-size: 1.2rem;">Overall Risk Assessment</strong>
+                        </div>
+                        <p>${data.summary}</p>
+                    </div>
+                </div>
+            `;
+
+            // Statistics
+            statsContainer.innerHTML = `
+                <div class="stat-card">
+                    <div class="stat-number" style="color: var(--danger-color);">${data.high_risk_issues.length}</div>
+                    <div class="stat-label">High Risk Issues</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" style="color: var(--warning-color);">${data.medium_risk_issues.length}</div>
+                    <div class="stat-label">Medium Risk Issues</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" style="color: var(--info-color);">${data.low_risk_issues.length}</div>
+                    <div class="stat-label">Low Risk Issues</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" style="color: var(--text-primary);">${data.total_issues}</div>
+                    <div class="stat-label">Total Issues</div>
+                </div>
+            `;
+
+            // Issues
+            let issuesHTML = '';
+
+            if (data.high_risk_issues.length > 0) {
+                issuesHTML += '<h3 style="color: var(--danger-color); margin: 30px 0 15px;">⚠️ High Risk Issues</h3>';
+                data.high_risk_issues.forEach(issue => {
+                    issuesHTML += createIssueCard(issue, 'high');
+                });
+            }
+
+            if (data.medium_risk_issues.length > 0) {
+                issuesHTML += '<h3 style="color: var(--warning-color); margin: 30px 0 15px;">⚡ Medium Risk Issues</h3>';
+                data.medium_risk_issues.forEach(issue => {
+                    issuesHTML += createIssueCard(issue, 'medium');
+                });
+            }
+
+            if (data.low_risk_issues.length > 0) {
+                issuesHTML += '<h3 style="color: var(--info-color); margin: 30px 0 15px;">ℹ️ Low Risk Issues</h3>';
+                data.low_risk_issues.forEach(issue => {
+                    issuesHTML += createIssueCard(issue, 'low');
+                });
+            }
+
+            issuesContainer.innerHTML = issuesHTML || '<p style="text-align: center; color: var(--success-color); font-size: 1.2rem;">✅ No compliance issues detected!</p>';
+
+            results.style.display = 'block';
+
+            // Store suggestions data for later use
+            results.dataset.suggestions = JSON.stringify(data.suggestions);
+        }
+
+        function createIssueCard(issue, risk) {
+            return `
+                <div class="issue-card">
+                    <div class="issue-header">
+                        <div class="issue-title">${issue.category}</div>
+                        <span class="risk-badge risk-${risk}">${risk}</span>
+                    </div>
+                    <div class="issue-description">${issue.description}</div>
+                    <div class="issue-details">
+                        <div class="issue-detail">
+                            <span class="issue-detail-label">ASA Rule:</span>
+                            <span class="issue-detail-value">${issue.asa_rule}</span>
+                        </div>
+                        ${issue.location ? `
+                        <div class="issue-detail">
+                            <span class="issue-detail-label">Location:</span>
+                            <span class="issue-detail-value">${issue.location}</span>
+                        </div>
+                        ` : ''}
+                    </div>
+                    ${issue.suggestion ? `
+                    <div class="suggestion-box">
+                        <strong>💡 Suggestion:</strong> ${issue.suggestion}
+                    </div>
+                    ` : ''}
+                </div>
+            `;
+        }
+
+        // Show suggestions
+        document.getElementById('showSuggestionsBtn').addEventListener('click', () => {
+            const results = document.getElementById('results');
+            const suggestionsSection = document.getElementById('suggestionsSection');
+            const suggestionsContent = document.getElementById('suggestionsContent');
+
+            const suggestions = JSON.parse(results.dataset.suggestions || '{}');
+
+            let html = '';
+
+            if (suggestions.general && suggestions.general.length > 0) {
+                html += '<h3 style="color: var(--primary-color); margin-bottom: 15px;">📋 General Recommendations</h3><ul style="margin-left: 20px; margin-bottom: 30px;">';
+                suggestions.general.forEach(item => {
+                    html += `<li style="margin-bottom: 10px;">${item}</li>`;
+                });
+                html += '</ul>';
+            }
+
+            if (suggestions.substantiation_needed && suggestions.substantiation_needed.length > 0) {
+                html += '<h3 style="color: var(--warning-color); margin-bottom: 15px;">📄 Substantiation Requirements</h3><ul style="margin-left: 20px; margin-bottom: 30px;">';
+                suggestions.substantiation_needed.forEach(item => {
+                    html += `<li style="margin-bottom: 10px;">${item}</li>`;
+                });
+                html += '</ul>';
+            }
+
+            if (suggestions.clarity_improvements && suggestions.clarity_improvements.length > 0) {
+                html += '<h3 style="color: var(--info-color); margin-bottom: 15px;">✨ Clarity Improvements</h3><ul style="margin-left: 20px; margin-bottom: 30px;">';
+                suggestions.clarity_improvements.forEach(item => {
+                    html += `<li style="margin-bottom: 10px;">${item}</li>`;
+                });
+                html += '</ul>';
+            }
+
+            if (suggestions.revised_content) {
+                html += '<h3 style="color: var(--success-color); margin-bottom: 15px;">📝 Suggested Compliant Version</h3>';
+                html += `<div class="revised-content">${suggestions.revised_content}</div>`;
+            }
+
+            suggestionsContent.innerHTML = html;
+            suggestionsSection.classList.add('active');
+            suggestionsSection.scrollIntoView({ behavior: 'smooth' });
+        });
+
+        function hideResults() {
+            document.getElementById('results').style.display = 'none';
+            document.getElementById('suggestionsSection').classList.remove('active');
+        }
+    </script>
+</body>
+</html>
